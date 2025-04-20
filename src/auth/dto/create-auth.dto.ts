@@ -1,6 +1,20 @@
+import { IsNotEmpty, IsString } from "class-validator"
+
 export class CreateAuthDto {
-    firts_name: string
-    last_name: string
-    username: string
-    uuid: string
+
+    @IsString()
+    @IsNotEmpty()
+    firts_name!: string
+    
+    @IsString()
+    @IsNotEmpty()
+    last_name!: string
+    
+    @IsString()
+    @IsNotEmpty()
+    username!: string
+
+    @IsString()
+    @IsNotEmpty()
+    uuid!: string
 }

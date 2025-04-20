@@ -22,8 +22,8 @@ export class AuthModel {
         try {
             const query: string = `insert into user (username, dt_created, first_name, last_name, uuid)
                                     values (?, NOW(), ?, ?, ?);`
-            const [rows] = await this.db.execute(query, [user.username, user.firts_name, user.last_name, user.uuid])
-            return rows || null
+            const [rows] = await this.db.execute<ResultSetHeader>(query, [user.username, user.firts_name, user.last_name, user.uuid])
+            return rows.insertId ?? null
 
         } catch (error) {
             console.log("We have a error when try to create a new user", error)
@@ -35,8 +35,8 @@ export class AuthModel {
         try {
             const query: string = `select * from user where id_user = ?`
 
-            const [rows] = await this.db.execute(query, [id])
-            return rows[0] || null
+            const [rows] = await this.db.execute<any>(query, [id])
+            return rows[0] ?? null
 
         } catch (error) {
             console.log("We have a error", error)
@@ -50,7 +50,7 @@ export class AuthModel {
                                     set username = ?, first_name = ?, last_name = ?
                                     where id_user = ?;`
             const [rows] = await this.db.execute(query, [user.username, user.firts_name, user.last_name, id])
-            return rows || null
+            return rows ?? null
 
         } catch (error) {
             console.log("We have a error", error)
@@ -63,8 +63,11 @@ export class AuthModel {
             const query: string = `update user
                                     set status = 0
                                     where id_user = ?;`
-            const [rows] = await this.db.execute(query, [id])
-            return rows || null
+            const [rows] = await this.db.execute<ResultSetHeader>(query, [id])
+            if (rows.changedRows === 0) {
+                return false
+            }
+            return rows.changedRows ?? null
         } catch (error) {
             console.log("We have a error", error)
             return false
@@ -76,8 +79,11 @@ export class AuthModel {
             const query: string = `update user
                                     set status = 1
                                     where id_user = ?;`
-            const [rows] = await this.db.execute(query, [id])
-            return rows || null
+            const [rows] = await this.db.execute<ResultSetHeader>(query, [id])
+            if (rows.changedRows === 0) {
+                return false
+            }
+            return rows.changedRows ?? null
         } catch (error) {
             console.log("We have a error", error)
             return false
@@ -89,7 +95,7 @@ export class AuthModel {
             const query: string = `select id_user, cast(status as unsigned) as status from user
                                     where id_user = ?;`
             const [rows] = await this.db.execute<any>(query, [id])
-            return rows[0].status || null
+            return rows[0].status ?? null
         } catch (error) {
             console.log("We have a error", error)
             return false
