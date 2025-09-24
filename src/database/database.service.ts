@@ -9,7 +9,7 @@ import * as mysql from 'mysql2';
 @Injectable()
 export class MysqlClient {
   private pool: mysql.Pool;
- 
+
   constructor() {
     this.pool = mysql.createPool({
       host: process.env.MYSQL_HOST,
@@ -21,10 +21,10 @@ export class MysqlClient {
       queueLimit: 0,
       multipleStatements: true,
       timezone: '-03:00',
-      enableKeepAlive: true
+      enableKeepAlive: true,
     });
   }
- 
+
   public async executeSql(
     connection: mysql.PoolConnection,
     query: string,
@@ -44,7 +44,7 @@ export class MysqlClient {
       throw error;
     }
   }
- 
+
   public async runConnection(): Promise<mysql.PoolConnection> {
     return new Promise((resolve, reject) => {
       this.pool.getConnection((error, connection) => {
@@ -55,7 +55,7 @@ export class MysqlClient {
       });
     });
   }
- 
+
   public async closeConnection(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.pool.end((error) => {
@@ -66,7 +66,7 @@ export class MysqlClient {
       });
     });
   }
- 
+
   public async beginTransaction(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.pool.getConnection((error, connection) => {
@@ -82,7 +82,7 @@ export class MysqlClient {
       });
     });
   }
- 
+
   public async commitTransaction(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.pool.getConnection((error, connection) => {
@@ -98,8 +98,10 @@ export class MysqlClient {
       });
     });
   }
- 
-  public async releaseConnection(connection: mysql.PoolConnection): Promise<void> {
+
+  public async releaseConnection(
+    connection: mysql.PoolConnection,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       connection.release();
       resolve();

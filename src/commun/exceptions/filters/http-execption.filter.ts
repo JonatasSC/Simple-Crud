@@ -1,42 +1,55 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Inject } from "@nestjs/common";
-import { CustomException } from "../custom-exceptions/custom-exception.service";
-import { Request, Response } from "express";
-import { v4 as uuidv4 } from 'uuid'
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Inject,
+} from '@nestjs/common';
+import { CustomException } from '../custom-exceptions/custom-exception.service';
+import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-    constructor(
-        @Inject(CustomException)
-        private readonly CustomException: CustomException,
-    ) {}
+  constructor(
+    @Inject(CustomException)
+    private readonly CustomException: CustomException,
+  ) {}
 
-    catch(exception: any, host: ArgumentsHost) {
-        const ctx = host.switchToHttp()
-        const response = ctx.getResponse<Response>()
-        const request = ctx.getRequest<Request>()
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request & { transactionId?: string }>();
 
-        const transaction = (request as any).transactionId || uuidv4()
+    const transaction = request.transactionId || uuidv4();
 
-        const status = 
-            exception instanceof HttpException
-                ? exception.getStatus()
-                : HttpStatus.INTERNAL_SERVER_ERROR
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        const message =
-            exception?.response?.message ||
-            exception?.message ||
-            'Internal Server Error'
+    let message = 'Internal Server Error';
+    let extraInfo: unknown = null;
 
-        const extraInfo =
-            exception?.response?.information || null
-        
-            const errorResponse = this.CustomException.error(
-                transaction,
-                message,
-                status,
-                extraInfo,
-            )
-
-            response.status(status).json(errorResponse)
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse();
+      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+        const responseObj = exceptionResponse as Record<string, unknown>;
+        message = (responseObj.message as string) || message;
+        extraInfo = responseObj.information || null;
+      }
+    } else if (exception instanceof Error) {
+      message = exception.message;
     }
+
+    const errorResponse = this.CustomException.error(
+      transaction,
+      message,
+      status,
+      extraInfo,
+    );
+
+    response.status(status).json(errorResponse);
+  }
 }
