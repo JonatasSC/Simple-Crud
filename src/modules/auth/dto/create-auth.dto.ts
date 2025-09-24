@@ -15,5 +15,5 @@ export class CreateAuthDto {
 
   @IsString()
   @IsNotEmpty()
-  uuid!: string;
+  password!: string;
 }

@@ -12,21 +12,25 @@ export class AuthModel {
     return rows || null;
   }
 
-  async createNewUser(user: {
-    firts_name: string;
-    last_name: string;
-    username: string;
-    uuid: string;
-  }) {
-    const query: string = `insert into user (username, dt_created, first_name, last_name, uuid)
-                                    values (?, NOW(), ?, ?, ?);`;
+  async createNewUser(
+    user: {
+      firts_name: string;
+      last_name: string;
+      username: string;
+    },
+    password_hash: string,
+    uuid: string,
+  ): Promise<boolean> {
+    const query: string = `INSERT INTO user (uuid, username, password_hash, first_name, last_name, dt_created, status)
+                                    values (?, ?, ?, ?, ?, NOW(), 1);`;
     const [rows] = await this.db.execute<ResultSetHeader>(query, [
+      uuid,
       user.username,
+      password_hash,
       user.firts_name,
       user.last_name,
-      user.uuid,
     ]);
-    return rows.insertId ?? null;
+    return rows.insertId > 1 ? true : false;
   }
 
   async searchOneUser(id: number) {
