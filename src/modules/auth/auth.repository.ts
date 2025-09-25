@@ -45,6 +45,18 @@ export class AuthModel {
     return rows[0] as UserInterface;
   }
 
+  async searchOneUserByUsername(username: string): Promise<UserInterface> {
+    const query: string = `select * from user where username = ?`;
+    const [rows] = await this.db.execute<(UserInterface & RowDataPacket)[]>(
+      query,
+      [username],
+    );
+    if (!rows[0]) {
+      throw new NotFoundException('User not found');
+    }
+    return rows[0] as UserInterface;
+  }
+
   async editAUser(
     id: number,
     user: { firts_name: string; last_name: string; username: string },
