@@ -6,22 +6,32 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthenticateDto } from './dto/authenticate.dto';
+import { AuthRequest } from 'src/middleware/authentication/auth.middleware';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/create/user')
+  @Post('create/user')
   create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.createNewUser(createAuthDto);
   }
 
-  @Get()
-  findAll() {
+  @Post()
+  auth(@Body() authenticateDto: AuthenticateDto) {
+    return this.authService.authenticateUser(authenticateDto);
+  }
+
+  @Get('all/users')
+  findAll(@Req() req: AuthRequest) {
+    const userData = req.user;
+    console.log(userData);
     return this.authService.findAll();
   }
 

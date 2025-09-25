@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './commun/exceptions/filters/http-execption.
 import { CustomException } from './commun/exceptions/custom-exceptions/custom-exception.service';
 import { SuccessResponseInterceptor } from './commun/exceptions/interceptors/success/success.interceptor';
 import { TransactionMiddleware } from './middleware/transaction/transaction.middleware';
+import { AuthenticationMiddleware } from './middleware/authentication/auth.middleware';
 
 @Module({
   imports: [
@@ -26,5 +27,9 @@ import { TransactionMiddleware } from './middleware/transaction/transaction.midd
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(TransactionMiddleware).forRoutes('*');
+    consumer
+      .apply(AuthenticationMiddleware)
+      .exclude({ path: 'auth', method: RequestMethod.POST })
+      .forRoutes('*');
   }
 }

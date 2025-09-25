@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -8,8 +9,11 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { AuthModel } from './auth.repository';
 import { transactionService } from 'src/middleware/transaction/transaction.service';
 import { CustomException } from 'src/commun/exceptions/custom-exceptions/custom-exception.service';
-import { genSaltSync, hashSync } from 'bcrypt-ts';
+import { genSaltSync, hashSync, compareSync } from 'bcrypt-ts';
 import { UuidGenUtil } from 'src/utils/uuid-generator.util';
+import { AuthenticateDto } from './dto/authenticate.dto';
+import { UserInterface } from './interface/users.interface';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -36,7 +40,56 @@ export class AuthService {
 
       return;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new InternalServerErrorException(
+        `Internal Server Error Create User: ${errorMessage}`,
+      );
+    }
+  }
+
+  async authenticateUser(authenticateDto: AuthenticateDto) {
+    try {
+      const findUser: UserInterface =
+        await this.AuthModel.searchOneUserByUsername(authenticateDto.username);
+
+      const checkPasswd: boolean = compareSync(
+        authenticateDto.password,
+        findUser.password_hash,
+      );
+
+      if (!checkPasswd) {
+        throw new ForbiddenException('Invalid Password');
+      }
+
+      const privateKey = process.env.PRIVATE_KEY_JWT;
+
+      if (!privateKey) {
+        throw new InternalServerErrorException('JWT private key is not configured');
+      }
+
+      const token: string = jwt.sign(
+        {
+          nome: findUser.firts_name,
+          last_name: findUser.last_name,
+          username: findUser.username,
+          uuid: findUser.uuid,
+          id: findUser.id,
+          password_hash: findUser.dt_created,
+          status: findUser.status,
+        },
+        privateKey,
+        {
+          algorithm: 'HS256',
+          expiresIn: '2h',
+        },
+      );
+
+      return token;
+      
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       throw new InternalServerErrorException(
         `Internal Server Error Create User: ${errorMessage}`,
       );
@@ -63,7 +116,6 @@ export class AuthService {
     }
 
     const dellUser: boolean = await this.AuthModel.deleteAUser(id);
-    console.log(dellUser);
     if (!dellUser)
       throw new InternalServerErrorException(
         'Error when try to deactivated this user',
