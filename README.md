@@ -267,4 +267,4 @@ Desenvolvido como parte de um projeto de estudo de NestJS com implementação de
 
 ---
 
-⌨️ com ❤️ por [Jonatas]
+⌨️ com ❤️ por Jonatas
